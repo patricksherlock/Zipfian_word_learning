@@ -159,7 +159,7 @@
     // images
     var preload = {
       type: jsPsychPreload,
-      images: ["stimuli/checkerboard.png", "stimuli/alien.png", "stimuli/audio_check/apple.png", "stimuli/audio_check/banana.png", "stimuli/audio_check/dog.png", "stimuli/audio_check/house.png"],
+      images: ["stimuli/fixation.png", "stimuli/alien.png", "stimuli/audio_check/apple.png", "stimuli/audio_check/banana.png", "stimuli/audio_check/dog.png", "stimuli/audio_check/house.png"],
       audio: audio_files,
       data: {task: 'preload'}
     };
@@ -311,7 +311,7 @@
     var exposure_trial = {
       type: jsPsychAudioImageKeyboardResponse,
       image: function(){
-                      var html = '<img height="200" src="stimuli/checkerboard.png">';
+                      var html = '<img height="200" src="stimuli/fixation.png">';
                       return html;
                   },
       stimulus: jsPsych.timelineVariable('audio'),
@@ -469,6 +469,7 @@
     };
 
     // FINAL TRIALS
+    // 0=yes, 1=no
     var recording_question_dataSaving = {
       type: jsPsychHtmlButtonResponse,
       stimulus: "<p>Did you use any recording device or written notes during the experiment? Your answer will not affect your compensation for participating in this experiment!<p>",
