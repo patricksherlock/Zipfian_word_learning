@@ -1,0 +1,497 @@
+<!--Each trial consists of five 20-second blocks with four 10-second blocks of fixation-->
+
+<!DOCTYPE html>
+<html>
+  <head> <!--- load in all the plugins needed in the experiment  -->
+
+    <!-- jspsych script -->
+    <script src="jspsych/dist/jspsych.js"></script>
+
+    <!-- plugin scripts -->
+    <script src="jspsych/dist/plugin-instructions.js"></script>
+    <script src="jspsych/dist/plugin-html-button-response.js"></script>
+    <script src="jspsych/dist/plugin-audio-image-keyboard-response.js"></script> <!-- custom made - Lucie Wolters -->
+    <script src="jspsych/dist/plugin-audio-image-button-response.js"></script> <!-- custom made - Lucie Wolters -->
+    <script src="jspsych/dist/plugin-html-keyboard-response.js"></script>
+    <script src="jspsych/dist/plugin-browser-check.js"></script>
+    <script src="jspsych/dist/plugin-fullscreen.js"></script>
+    <script src="jspsych/dist/plugin-external-html.js"></script>
+    <script src="jspsych/dist/plugin-survey-html-form.js"></script> <!-- custom made - Lucie Wolters -->
+    <script src="jspsych/dist/plugin-preload.js"></script>
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script> <!-- for piping data to OSF through DataPipe -->
+
+    <!-- style sheet -->
+    <link rel="stylesheet" href="jspsych/dist/jspsych.css">
+  </head>
+
+  <body>
+
+  <!-- experiment script -->
+  <script>
+
+    // set up Jspsych framework
+    var jsPsych = initJsPsych({
+      experiment_width: 900
+    });
+
+    //  GENERAL EXPERIMENT PARAMETERS
+    //  random participant id
+    var subject_id = jsPsych.randomization.randomID(15);
+    const filename = `${subject_id}.csv`;
+
+    // all possible langauges; L1 is first language in a pair, L2 is second language in a pair
+    var L1s = [
+      ["kulego", "nagitu", "tobuma", "midobe"],
+      ["lakubi", "negado", "mudile", "kitena"],
+      ["badegu", "nulita", "kemubi", "tigale"],
+      ["gonade", "medika", "kilubo", "butemi"],
+      ["dogiba", "kalegu", "tebodi", "minato"],
+      ["kamelu", "lodage", "nugito", "teboma"]
+    ];
+
+    var L2s = [
+      ["lemaku", "gibeto", "bugona", "dotumi"],
+      ["binaku", "temula", "dokine", "galedi"],
+      ["deguti", "litanu", "muleba", "gabike"],
+      ["nadeki", "temibu", "lubome", "dikago"],
+      ["nadite", "lebado", "bogumi", "gitoka"],
+      ["gilute", "bomanu", "dagelo", "metoka"]
+    ];
+
+    // create counterbalanced condition selection [0=uniform, 1=Zipfian]
+    var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
+
+    // randomly select a language pair to use and get the words and their syllables (6 language pairs)
+    var lang_num = jsPsych.randomization.randomInt(0,5);
+    var L1 = L1s[lang_num];
+    var L2 = L2s[lang_num];
+    lang_num += 1;  // adds 1 because index starts at zero and lang pairs are 1-6
+    jsPsych.data.addProperties({lang_pair: lang_num});
+
+    // randomly select which langauge to use as words and which language to use as foils
+    var words_foils = jsPsych.randomization.randomInt(0,1);
+    if (words_foils == 0) {
+      var words = L1;
+      var foils = L2;
+    } else {
+      var words = L2;
+      var foils = L1;
+    };
+    jsPsych.data.addProperties({words: words});
+    jsPsych.data.addProperties({foils: foils});
+
+    // capture info from Prolivar condition_assignment = jsPsych.randomization.sampleWithoutReplacement(['conditionA', 'conditionB', 'conditionC'], 1)[0];s
+    var prolific_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
+    var study_id = jsPsych.data.getURLVariable('STUDY_ID');
+    var session_id = jsPsych.data.getURLVariable('SESSION_ID');
+
+    // Add general experiment parameters to the JsPsych data object - condition variable will be added later.
+    jsPsych.data.addProperties({
+      subject_id: subject_id,
+      prolific_id: prolific_id,
+      study_id: study_id,
+      session_id: session_id,
+    });
+
+    // create timeline variable
+    var timeline = [];
+
+    // BROWSER CHECKS
+    var browser_check = {
+      type: jsPsychBrowserCheck,
+      features: ["width", "height", "webaudio", "browser", "mobile", "fullscreen"],
+      minimum_width: 1000,
+      minimum_height: 600,
+      allow_window_resize: true,
+      inclusion_function: (data) => {
+        return data.browser == 'chrome' && data.mobile == false && data.webaudio == true && data.fullscreen == true
+      },
+      exclusion_message: (data) => {
+        if(data.mobile){
+          return '<p>You must use a desktop/laptop computer to participate in this experiment. Please return your submission on Prolific.</p>';
+        } else if(data.browser !== 'chrome'){
+          return '<p>You must use Chrome as your browser to complete this experiment. Please re-open the experiment in Chrome, if possible, or return your submission on Prolific.</p>'
+        } else {
+          return '<p>You do not have the right screen size or audio player to complete this experiment. Please increase screen size, if possible, or return your submission on Prolific.</p>'
+        }
+      },
+      data: {task: 'browser_check' }
+    };
+
+    var browser_check_during_exp = {
+      type: jsPsychBrowserCheck,
+      features: ["width", "height", "webaudio", "browser", "mobile", "fullscreen"],
+      minimum_width: 1000,
+      minimum_height: 600,
+      allow_window_resize: true,
+      data: {task: 'browser_check' }
+    };
+
+    timeline.push(browser_check);
+
+    // FULL SCREEN
+    var enter_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: true,
+      delay_after: 2000,
+      data: {task: 'enter_fullscreen' }
+    };
+
+    var exit_fullscreen = {
+      type: jsPsychFullscreen,
+      fullscreen_mode: false,
+      delay_after: 0,
+      data: {task: 'exit_fullscreen' }
+    };
+
+    // PRELOAD
+    // audio
+    var audio_files = [];
+    for (let i = 0; i < words.length; i++) {
+      audio_files.push("stimuli/words/"+words[i]+".wav");
+      audio_files.push("stimuli/words/"+foils[i]+".wav");
+      audio_files.push("stimuli/fixation.wav");
+
+      // audio files for audio check
+      audio_files.push("stimuli/audio_check/apple.mp3", "stimuli/audio_check/banana.mp3", "stimuli/audio_check/dog.mp3", "stimuli/audio_check/house.mp3");
+    };
+
+    // images
+    var preload = {
+      type: jsPsychPreload,
+      images: ["stimuli/checkerboard.png", "stimuli/alien.png", "stimuli/audio_check/apple.png", "stimuli/audio_check/banana.png", "stimuli/audio_check/dog.png", "stimuli/audio_check/house.png"],
+      audio: audio_files,
+      data: {task: 'preload'}
+    };
+
+    // CONSENT FORM
+    // function that checks if checkbox on consent form is checked
+    var check_consent = function(elem) {
+    if (document.getElementById("consent_checkbox").checked) {
+        return true;
+    }
+    else {
+        alert("If you wish to participate, you must check the box next to the statement 'I agree to participate in this study.'");
+        return false;
+    }
+    return false;
+    };
+
+    // variable that calls the .html file with the consent form
+    var consent_form = {
+      type: jsPsychExternalHtml,
+      url: "consentForm.html",
+      cont_btn: "start",
+      check_fn: check_consent,
+      data: {task: 'consent' }
+    };
+
+    // TEST AUDIO
+    var audio_check_stims = ['dog', 'house', 'banana', 'apple'];
+    var ran_number = jsPsych.randomization.sampleWithReplacement([0,1,2,3], 1)[0];
+
+    var check_stims = [
+      {image: ran_number, instructions: ` `}
+    ];
+
+    var test_audio = {
+      timeline: [
+        {
+          type: jsPsychHtmlButtonResponse,
+          stimulus: function(){
+                          var html =`<p style="color:blue;"> ${jsPsych.timelineVariable('instructions')} </p> <p>First, let's make sure you're audio is working. Listen to the audio by clicking on the play-button on the media player below. Please adjust the volume of your computer if necessary.<p> <p> <audio controls> <source src='stimuli/audio_check/`+ audio_check_stims[+`${jsPsych.timelineVariable('image')}`]+`.mp3' type='audio/mp3'> </audio> </p> <p> What image did the audio describe? </p>`
+                          return html;
+                      },
+          choices: [ "<img src='stimuli/audio_check/dog.png' width='150'>", "<img src='stimuli/audio_check/house.png' width='150'>", "<img src='stimuli/audio_check/banana.png' width='150'>", "<img src='stimuli/audio_check/apple.png' width='150'>"],
+          post_trial_gap: 1000,
+          data: {task: 'audio_test'},
+          on_finish: function(data) {
+            if (data.response == check_stims[0].image) {
+              data.correct = 1
+            } else (data.correct = 0);
+            check_stims[0].image = jsPsych.randomization.sampleWithReplacement([0,1,2,3], 1)[0];
+            check_stims[0].instructions = 'Try again!'
+          }
+        }
+      ],
+      timeline_variables: check_stims
+    };
+
+    var check_result = {
+    timeline: [test_audio],
+    loop_function: function(data){
+        if(data.values()[0].correct == 1){
+            return false;
+        } else {
+            console.log(ran_number)
+            return true;
+
+        }
+    }
+};
+
+    timeline.push(preload, consent_form, enter_fullscreen, check_result);
+
+    // TRAINING
+    // instuctions
+    var instructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: [
+        '<p> Welcome to the experiment.</p> '+
+        '<p>TRAINING INSTRUCTIONS</p>' +
+        '<p><img height="100" src="stimuli/alien.png"></p>' +
+        'Click next to begin. <p>'
+      ],
+      choices: ['next'],
+      data: {task: 'instructions1' }
+    };
+
+    // select condition
+    var conditions = ["uniform", "zipfian"];
+    var condition = conditions[condition_number];
+    jsPsych.data.addProperties({condition: condition}); // adds a column named "condition" to the datafile that has the value of the condition for each row
+
+    // select word frequency rank for Zipfian distribution
+    var frequency_ranks = "NA"
+    if (condition_number == 1) {
+      frequency_ranks = jsPsych.randomization.sampleWithoutReplacement(words, 4);
+    };
+    jsPsych.data.addProperties({frequency_ranks: frequency_ranks});  // adds a column called "frequency_ranks" to the datafile
+
+    // make list of audio files with 5 blocks of 25 words each followed by a fixation gap of 10 seconds
+    var exposure_files = []
+
+    // uniform (condition_number=0)
+    if (condition_number == 0){
+      for (let i = 0; i < 5; i++){
+        var trialList = [];
+        words.forEach(word => {
+          
+          for (let x = 0; x < 6; x++) {
+            trialList.push(word);
+          }
+        });
+
+        var shuffledWords = jsPsych.randomization.shuffle(words);
+        for (let y = 0; y < 1; y++) {
+          trialList.push(shuffledWords[y]);
+        };
+      
+        trialList = jsPsych.randomization.shuffle(trialList);
+        for (let z = 0; z < trialList.length; z++) {
+          exposure_files.push("stimuli/words/"+trialList[z]+".wav")
+        };
+        exposure_files.push("stimuli/fixation.wav");
+      };
+
+      // Zipfian (condition_number=1)
+    } else {
+      for (let i = 0; i < 5; i++){
+        var trialList = [];
+        var zipf = [12, 6, 4, 3];
+        
+        for (let x = 0; x < frequency_ranks.length; x++) {
+          var word = frequency_ranks[x];
+          var count = zipf[x];
+        
+          for (let y = 0; y < count; y++) {
+            trialList.push(word);
+          };
+        };
+
+        trialList = jsPsych.randomization.shuffle(trialList);
+        for (let z = 0; z < trialList.length; z++) {
+          exposure_files.push("stimuli/words/"+trialList[z]+".wav")
+        };
+        exposure_files.push("stimuli/fixation.wav");
+      };
+    };
+    
+    // exposure trial; no time between audio file playback
+    var exposure_trial = {
+      type: jsPsychAudioImageKeyboardResponse,
+      image: function(){
+                      var html = '<img height="200" src="stimuli/checkerboard.png">';
+                      return html;
+                  },
+      stimulus: jsPsych.timelineVariable('audio'),
+      choices: "NO_KEYS",
+      audio_delay: 0,
+      trial_ends_after_audio: true,
+      response_ends_trial: false,
+      response_allowed_while_playing: false,
+      post_trial_gap: 0,
+      data: {
+        task: 'exposure_trial'
+      }
+    };
+
+    // play all audio files consecutively
+    var exposure_block = {
+      timeline: [exposure_trial],
+      timeline_variables: exposure_files.map(audio_file => ({ audio: audio_file })),
+      randomize_order: false
+    };
+
+    timeline.push(instructions, exposure_block);
+
+    // SEGMENTATION TESTING
+    // instructions
+    var segmentation_instructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: [
+        '<p>SEGMENTATION INSTRUCTIONS</p>' +
+        '<p><img height="100" src="stimuli/alien.png"></p>' +
+        '<p> Click next to begin. </p>'
+      ],
+      choices: ['next'],
+      data: {task: 'instructions_segmentation' }
+    };
+
+    // stimuli
+    var segmentation_test_stimuli = [];
+
+    var trial_number = 1
+    for (word in words) {
+      for (foil in foils) {
+        var current_stim = {};
+        current_stim.word = words[word];
+        current_stim.foil = foils[foil];
+
+        if (trial_number % 2 === 0) {
+          current_stim.change_order = true;
+        } else {
+          current_stim.change_order = false;
+        }
+        var trial_number = trial_number + 1
+
+        segmentation_test_stimuli.push(current_stim);
+      }
+    };
+
+  // semi-randomize test stimuli
+  function get_valid_item(stimuli_array, last_item) {
+  const valid = stimuli_array.filter(stim =>
+    stim.word !== last_item.word &&
+    stim.foil !== last_item.foil
+  );
+
+  if (valid.length == 0) {
+    console.warn('No valid segmentation stimulus found, relaxing constraint');
+    return jsPsych.randomization.sampleWithReplacement(stimuli_array, 1)[0];
+  }
+
+  return jsPsych.randomization.sampleWithReplacement(valid, 1)[0];
+};
+
+    var segmentation_test_stimuli_ran = []
+
+    segmentation_test_stimuli.sort(function() {return 0.5 - Math.random();})
+    for (let i = 0; i < 16; i++) {
+      if (i == 0){
+        segmentation_test_stimuli_ran.push(segmentation_test_stimuli.pop());
+      } else {
+        var last_item = segmentation_test_stimuli_ran[segmentation_test_stimuli_ran.length - 1];
+        var new_item = get_valid_item(segmentation_test_stimuli, last_item)
+        const index = segmentation_test_stimuli.indexOf(new_item);
+          if (index > -1) {
+            segmentation_test_stimuli.splice(index, 1);
+          }
+        segmentation_test_stimuli_ran.push(new_item)
+      }
+    };
+
+    // trial
+    var segmentation_testing = {
+      timeline: [
+        {
+            type: jsPsychAudioImageButtonResponse,
+            image: function(){
+                            var html = ``;
+                            return html;
+                        },
+            audio1: function(){
+                            var html = `stimuli/words/${jsPsych.timelineVariable('word')}.wav`;
+                            return html;
+                        },
+            audio2: function(){
+                            var html = `stimuli/words/${jsPsych.timelineVariable('foil')}.wav`; // change to ${jsPsych.timelineVariable('wrong_choice')}
+                            return html;
+                        },
+            change_audio_order: jsPsych.timelineVariable('change_order'), // change into timeline variable; 50/50 true and false
+            inter_audio_gap: 1000, // audio gap between first and second audio
+            audio_delay: 1000, // delay between displaying of buttons and playing of first audio
+            choices: ['<p style="font-size: xx-large; width: 150px;;"><b>1</b></p>', '<p style="font-size: xx-large; width: 150px;"><b>2</b></p>'],
+            prompt: '<p id="prompt">Which one is a word?</p>',
+            response_allowed_while_playing: false,
+            post_trial_gap: 1500, // gap between trials
+            on_finish:  function(data){
+              var data = jsPsych.data.get().last(1).values()[0];
+              var button_pressed = data.response
+              if (data.change_audio_order) {
+                var audioWord_first = 0
+                data.button_1 = data.foil
+                data.button_2 = data.word
+                if (button_pressed == 0) {data.response_audio = data.foil}
+                if (button_pressed == 1) {data.response_audio = data.word}
+              } else {
+                var audioWord_first = 1
+                data.button_1 = data.word
+                data.button_2 = data.foil
+                if (button_pressed == 0) {data.response_audio = data.word}
+                if (button_pressed == 1) {data.response_audio = data.foil}
+              };
+              data.audioWord_first = audioWord_first
+              if (button_pressed !== audioWord_first) {data.correct = 1};
+              if (button_pressed == audioWord_first) {data.correct = 0};
+            },
+            data: {
+              word: jsPsych.timelineVariable('word'),
+              foil: jsPsych.timelineVariable('foil'),
+              change_audio_order: jsPsych.timelineVariable('change_order')
+            }
+        }
+      ],
+      timeline_variables: segmentation_test_stimuli_ran,
+      randomize_order: false, // semi-randomization has been done around line 301
+      data: {task: 'segmentation_trial'}
+    };
+
+    timeline.push(segmentation_instructions, segmentation_testing);
+
+    // SAVE DATA
+    const save_data = {
+      type: jsPsychPipe,
+      action: "save",
+      experiment_id: "VPOLJ4qgnyOf",
+      filename: filename,
+      data_string: ()=>jsPsych.data.get().csv()
+    };
+
+    // FINAL TRIALS
+    var recording_question_dataSaving = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: "<p>Did you use any recording device or written notes during the experiment? Your answer will not affect your compensation for participating in this experiment!<p>",
+      choices: ["Yes", "No"],
+      data: {
+        task: 'recording_question',
+      }
+    };
+
+    var final_trial = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<p>You've finished the last task. Thank you for participating! </p> <p> Click on 'finish' to save your study participation and to return to prolific.</p>`,
+      choices: ['finish'],
+      data: {
+        task: 'final_trial',
+      },
+    };
+
+    timeline.push(recording_question_dataSaving, save_data, exit_fullscreen, final_trial)
+    
+    // run experiment
+    jsPsych.run(timeline);
+
+  </script>
+  </body>
+</html>
