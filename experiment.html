@@ -1,5 +1,3 @@
-<!--Each trial consists of five 20-second blocks with four 10-second blocks of fixation-->
-
 <!DOCTYPE html>
 <html>
   <head> <!--- load in all the plugins needed in the experiment  -->
@@ -258,12 +256,12 @@
     };
     jsPsych.data.addProperties({frequency_ranks: frequency_ranks});  // adds a column called "frequency_ranks" to the datafile
 
-    // make list of audio files with 5 blocks of 25 words each followed by a fixation gap of 10 seconds
+    // make list of audio files with 6 blocks of 25 words each followed by a fixation gap of 10 seconds
     var exposure_files = []
 
     // uniform (condition_number=0)
     if (condition_number == 0){
-      for (let i = 0; i < 5; i++){
+      for (let i = 0; i < 6; i++){
         var trialList = [];
         words.forEach(word => {
           
@@ -286,7 +284,7 @@
 
       // Zipfian (condition_number=1)
     } else {
-      for (let i = 0; i < 5; i++){
+      for (let i = 0; i < 6; i++){
         var trialList = [];
         var zipf = [12, 6, 4, 3];
         
