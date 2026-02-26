@@ -56,14 +56,14 @@
       ["gilute", "bomanu", "dagelo", "metoka"]
     ];
 
-    // create counterbalanced condition selection [0=uniform, 1=Zipfian]
+    // randomly selects a condition [0=uniform, 1=Zipfian]
     var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
 
     // randomly select a language pair to use and get the words and their syllables (6 language pairs)
     var lang_num = jsPsych.randomization.randomInt(0,5);
     var L1 = L1s[lang_num];
     var L2 = L2s[lang_num];
-    lang_num += 1;  // adds 1 because index starts at zero and lang pairs are 1-6
+    lang_num += 1;  // adds 1 because jsPsych index starts at zero and lang pairs are 1-6
     jsPsych.data.addProperties({lang_pair: lang_num});
 
     // randomly select which langauge to use as words and which language to use as foils
@@ -256,11 +256,31 @@
     };
     jsPsych.data.addProperties({frequency_ranks: frequency_ranks});  // adds a column called "frequency_ranks" to the datafile
 
-    // make list of audio files with 6 blocks of 25 words each followed by a fixation gap of 10 seconds
+    // make list of audio files with 6 blocks of 25 words each followed by a fixation gap of 6 seconds
     var exposure_files = []
+
+    // ensures no word is repeated twice in a row within a block
+    function shuffleNoRepeats(word_list) {
+      let shuffled;
+      let hasRepeats = true;
+
+      while (hasRepeats) {
+        shuffled = jsPsych.randomization.shuffle(word_list.slice());
+        hasRepeats = false;
+        for (let i = 1; i < shuffled.length; i++) {
+          if (shuffled[i] === shuffled[i - 1]) {
+            hasRepeats = true;
+            break;
+          };
+        };
+      };
+
+      return shuffled;
+    };
 
     // uniform (condition_number=0)
     if (condition_number == 0){
+      let lastWordPreviousBlock = null;
       for (let i = 0; i < 6; i++){
         var trialList = [];
         words.forEach(word => {
@@ -275,7 +295,20 @@
           trialList.push(shuffledWords[y]);
         };
       
-        trialList = jsPsych.randomization.shuffle(trialList);
+        // ensures words aren't repeated across block boundaries
+        let valid = false;
+        while (!valid) {
+          trialList = shuffleNoRepeats(trialList);
+          let firstWord = trialList[0];
+          let lastWord = trialList[trialList.length - 1];
+          let noBoundaryRepeat = lastWordPreviousBlock === null || firstWord !== lastWordPreviousBlock;
+          if (noBoundaryRepeat) {
+            valid = true;
+            lastWordPreviousBlock = lastWord;
+          };
+        };
+
+        // pushes audio and fixation files to exposure files list
         for (let z = 0; z < trialList.length; z++) {
           exposure_files.push("stimuli/words/"+trialList[z]+".wav")
         };
@@ -284,6 +317,7 @@
 
       // Zipfian (condition_number=1)
     } else {
+      let lastWordPreviousBlock = null;
       for (let i = 0; i < 6; i++){
         var trialList = [];
         var zipf = [12, 6, 4, 3];
@@ -297,13 +331,38 @@
           };
         };
 
-        trialList = jsPsych.randomization.shuffle(trialList);
+        // ensures words aren't repeated across block boundaries
+        let valid = false;
+        while (!valid) {
+          trialList = shuffleNoRepeats(trialList);
+          let firstWord = trialList[0];
+          let lastWord = trialList[trialList.length - 1];
+          let noBoundaryRepeat = lastWordPreviousBlock === null || firstWord !== lastWordPreviousBlock;
+          if (noBoundaryRepeat) {
+            valid = true;
+            lastWordPreviousBlock = lastWord;
+          };
+        };
+        
+        // pushes audio and fixation files to exposure files list
         for (let z = 0; z < trialList.length; z++) {
           exposure_files.push("stimuli/words/"+trialList[z]+".wav")
         };
         exposure_files.push("stimuli/fixation.wav");
       };
     };
+
+    // tests if there are word repeats across block boundaries
+    function checkFullExposure(arr) {
+      const filtered = arr.filter(file => !file.includes("fixation"));
+      for (let i = 1; i < filtered.length; i++) {
+        if (filtered[i] === filtered[i - 1]) {
+          throw new Error("Adjacent duplicate detected across blocks: " + filtered[i]);
+        };
+      };
+    };
+
+    checkFullExposure(exposure_files);
     
     // exposure trial; no time between audio file playback
     var exposure_trial = {
@@ -367,20 +426,20 @@
       }
     };
 
-  // semi-randomize test stimuli
-  function get_valid_item(stimuli_array, last_item) {
-  const valid = stimuli_array.filter(stim =>
-    stim.word !== last_item.word &&
-    stim.foil !== last_item.foil
-  );
+    // semi-randomize test stimuli
+    function get_valid_item(stimuli_array, last_item) {
+    const valid = stimuli_array.filter(stim =>
+      stim.word !== last_item.word &&
+      stim.foil !== last_item.foil
+    );
 
-  if (valid.length == 0) {
-    console.warn('No valid segmentation stimulus found, relaxing constraint');
-    return jsPsych.randomization.sampleWithReplacement(stimuli_array, 1)[0];
-  }
+    if (valid.length == 0) {
+      console.warn('No valid segmentation stimulus found, relaxing constraint');
+      return jsPsych.randomization.sampleWithReplacement(stimuli_array, 1)[0];
+    }
 
-  return jsPsych.randomization.sampleWithReplacement(valid, 1)[0];
-};
+    return jsPsych.randomization.sampleWithReplacement(valid, 1)[0];
+  };
 
     var segmentation_test_stimuli_ran = []
 
