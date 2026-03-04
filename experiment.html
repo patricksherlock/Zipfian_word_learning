@@ -20,6 +20,10 @@
 
     <!-- style sheet -->
     <link rel="stylesheet" href="jspsych/dist/jspsych.css">
+
+    <!-- instantiate progress bar -->
+    <style>#jspsych-progressbar-container {visibility: hidden;}</style>
+
   </head>
 
   <body>
@@ -29,7 +33,10 @@
 
     // set up Jspsych framework
     var jsPsych = initJsPsych({
-      experiment_width: 900
+      experiment_width: 900,
+      show_progress_bar: true,  // progress bar starts off
+      auto_update_progress_bar: false,  // progress bar updated manually
+      message_progress_bar: ''  // blank progress bar message
     });
 
     //  GENERAL EXPERIMENT PARAMETERS
@@ -225,12 +232,12 @@
             return true;
 
         }
-    }
-};
+      }
+    };
 
     timeline.push(preload, consent_form, enter_fullscreen, check_result);
-
-    // TRAINING
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // EXPOSURE
     // instuctions
     var instructions = {
       type: jsPsychHtmlButtonResponse,
@@ -315,7 +322,7 @@
         exposure_files.push("stimuli/fixation.wav");
       };
 
-      // Zipfian (condition_number=1)
+    // Zipfian (condition_number=1)
     } else {
       let lastWordPreviousBlock = null;
       for (let i = 0; i < 6; i++){
@@ -352,7 +359,7 @@
       };
     };
 
-    // tests if there are word repeats across block boundaries
+    // checks if there are word repeats across block boundaries; for testing only
     function checkFullExposure(arr) {
       const filtered = arr.filter(file => !file.includes("fixation"));
       for (let i = 1; i < filtered.length; i++) {
@@ -363,7 +370,28 @@
     };
 
     checkFullExposure(exposure_files);
-    
+
+    // show progress bar when exposure phase starts
+    const show_progress_bar = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "",
+      choices: "NO_KEYS",
+      trial_duration: 1,
+      on_start: function() {
+        const progressContainer = document.querySelector('#jspsych-progressbar-container');
+        if (progressContainer) progressContainer.style.visibility = 'visible';
+        const startTime = Date.now();
+        const totalDuration = 3 * 60 * 1000; // total trial duration estimate in ms
+        const intervalID = setInterval(() => {
+          let elapsed = Date.now() - startTime;
+          let progress = elapsed / totalDuration;
+          if (progress > 1) progress = 1;
+          jsPsych.setProgressBar(progress);
+        }, 250); // updates every 250ms for smoothness
+        window._exposureProgressIntervalID = intervalID;
+      }
+    };
+
     // exposure trial; no time between audio file playback
     var exposure_trial = {
       type: jsPsychAudioImageKeyboardResponse,
@@ -383,6 +411,20 @@
       }
     };
 
+    // hide progress bar when exposure phase ends
+    const hide_progress_bar = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "",
+      choices: "NO_KEYS",
+      trial_duration: 1,
+      on_start: function() {
+        const progressContainer = document.querySelector('#jspsych-progressbar-container');
+        if (progressContainer) progressContainer.style.visibility = 'hidden';
+        clearInterval(window._exposureProgressIntervalID);
+        jsPsych.setProgressBar(0);
+      }
+    };
+
     // play all audio files consecutively
     var exposure_block = {
       timeline: [exposure_trial],
@@ -390,9 +432,11 @@
       randomize_order: false
     };
 
-    timeline.push(instructions, exposure_block);
+    // timeline.push(instructions, show_progress_bar, exposure_block, hide_progress_bar);
+    timeline.push(instructions);
 
-    // SEGMENTATION TESTING
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // SEGMENTATION
     // instructions
     var segmentation_instructions = {
       type: jsPsychHtmlButtonResponse,
@@ -458,6 +502,22 @@
       }
     };
 
+    // reset progress bar
+    var reset_progress_bar = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "",
+      choices: "NO_KEYS",
+      trial_duration: 1,
+      on_start: function() {
+        jsPsych.setProgressBar(0);
+        const progressContainer = document.querySelector('#jspsych-progressbar-container');
+        if (progressContainer) progressContainer.style.visibility = 'visible';
+      }
+    };
+
+    // number of segmentation trials for progress bar
+    var increment = 1 / segmentation_test_stimuli_ran.length;
+
     // trial
     var segmentation_testing = {
       timeline: [
@@ -501,6 +561,11 @@
               data.audioWord_first = audioWord_first
               if (button_pressed !== audioWord_first) {data.correct = 1};
               if (button_pressed == audioWord_first) {data.correct = 0};
+
+              // update progress bar
+              var increment = 1 / segmentation_test_stimuli_ran.length;
+              var completed = jsPsych.data.get().filter({task: 'segmentation_trial'}).count();
+              jsPsych.setProgressBar(completed * increment);
             },
             data: {
               word: jsPsych.timelineVariable('word'),
@@ -514,7 +579,19 @@
       data: {task: 'segmentation_trial'}
     };
 
-    timeline.push(segmentation_instructions, segmentation_testing);
+    // remove progress bar after segmentation trials
+    var remove_progress_bar = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: "",
+      choices: "NO_KEYS",
+      trial_duration: 1,
+      on_start: function() {
+        const progressContainer = document.querySelector('#jspsych-progressbar-container');
+        if (progressContainer) progressContainer.style.visibility = 'hidden';
+      }
+    };
+
+    timeline.push(segmentation_instructions, reset_progress_bar, segmentation_testing, remove_progress_bar);
 
     // SAVE DATA
     const save_data = {
@@ -526,11 +603,11 @@
     };
 
     // FINAL TRIALS
-    // 0=yes, 1=no
+    // 0=no, 1=yes
     var recording_question_dataSaving = {
       type: jsPsychHtmlButtonResponse,
       stimulus: "<p>Did you use any recording device or written notes during the experiment? Your answer will not affect your compensation for participating in this experiment!<p>",
-      choices: ["Yes", "No"],
+      choices: ["No", "Yes"],
       data: {
         task: 'recording_question',
       }
