@@ -47,7 +47,7 @@
     // all possible langauges; L1 is first language in a pair, L2 is second language in a pair
     var L1s = [
       ["kulego", "nagitu", "tobuma", "midobe"],
-      ["lakubi", "negado", "mudile", "kitena"],
+      // ["lakubi", "negado", "mudile", "kitena"],
       ["dogiba", "kalegu", "tebodi", "minato"],
       // ["kinome", "teguda", "bulego", "moditu"],
       // ["tobanu", "gukema", "delubo", "lamodi"],
@@ -56,7 +56,7 @@
 
     var L2s = [
       ["lemaku", "gibeto", "bugona", "dotumi"],
-      ["binaku", "temula", "dokine", "galedi"],
+      // ["binaku", "temula", "dokine", "galedi"],
       ["nadite", "lebado", "bogumi", "gitoka"],
       // ["gumeki", "letumo", "nodabu", "digote"],
       // ["matolu", "nubola", "mogude", "kediba"],
@@ -64,10 +64,11 @@
     ];
 
     // randomly selects a condition [0=uniform, 1=Zipfian]
-    var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
+    // var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
+    var condition_number = 0
 
     // randomly select a language pair to use and get the words and their syllables (6 language pairs)
-    var lang_num = jsPsych.randomization.randomInt(0,2);
+    var lang_num = jsPsych.randomization.randomInt(0,1);
     var L1 = L1s[lang_num];
     var L2 = L2s[lang_num];
     lang_num += 1;  // adds 1 because jsPsych index starts at zero and lang pairs are 1-6
@@ -629,6 +630,7 @@
   </script>
   </body>
 </html>
+
 
 
 
