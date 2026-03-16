@@ -1,0 +1,89 @@
+Removing subjects with the same response for every trial:
+g5stcwbtc7d8pqc
+condition
+condition
+zipfian    120
+uniform    115
+Name: count, dtype: int64
+lang_pair
+lang_pair
+6    42
+2    41
+5    40
+1    39
+4    38
+3    35
+Name: count, dtype: int64
+words
+words
+["nodebu","dimate","mekugo","gubila"]    26
+["lemaku","gibeto","bugona","dotumi"]    22
+["matolu","nubola","mogude","kediba"]    22
+["lakubi","negado","mudile","kitena"]    21
+["kinome","teguda","bulego","moditu"]    20
+["binaku","temula","dokine","galedi"]    19
+["dogiba","kalegu","tebodi","minato"]    19
+["tobanu","gukema","delubo","lamodi"]    18
+["gumeki","letumo","nodabu","digote"]    18
+["kulego","nagitu","tobuma","midobe"]    17
+["nadite","lebado","bogumi","gitoka"]    17
+["bimegu","tegoma","kudino","labude"]    16
+Name: count, dtype: int64
+condition
+condition
+zipfian    87
+uniform    76
+Name: count, dtype: int64
+lang_pair
+lang_pair
+6    30
+1    30
+2    29
+3    26
+5    25
+4    23
+Name: count, dtype: int64
+words
+words
+["lakubi","negado","mudile","kitena"]    18
+["nodebu","dimate","mekugo","gubila"]    18
+["lemaku","gibeto","bugona","dotumi"]    17
+["nadite","lebado","bogumi","gitoka"]    15
+["kulego","nagitu","tobuma","midobe"]    13
+["matolu","nubola","mogude","kediba"]    13
+["tobanu","gukema","delubo","lamodi"]    12
+["dogiba","kalegu","tebodi","minato"]    12
+["gumeki","letumo","nodabu","digote"]    12
+["bimegu","tegoma","kudino","labude"]    12
+["kinome","teguda","bulego","moditu"]    11
+["binaku","temula","dokine","galedi"]    10
+Name: count, dtype: int64
+condition
+condition
+uniform    39
+zipfian    33
+Name: count, dtype: int64
+lang_pair
+lang_pair
+5    15
+4    15
+6    12
+2    12
+3     9
+1     9
+Name: count, dtype: int64
+words
+words
+["binaku","temula","dokine","galedi"]    9
+["matolu","nubola","mogude","kediba"]    9
+["kinome","teguda","bulego","moditu"]    9
+["nodebu","dimate","mekugo","gubila"]    8
+["dogiba","kalegu","tebodi","minato"]    7
+["tobanu","gukema","delubo","lamodi"]    6
+["gumeki","letumo","nodabu","digote"]    6
+["lemaku","gibeto","bugona","dotumi"]    5
+["bimegu","tegoma","kudino","labude"]    4
+["kulego","nagitu","tobuma","midobe"]    4
+["lakubi","negado","mudile","kitena"]    3
+["nadite","lebado","bogumi","gitoka"]    2
+Name: count, dtype: int64
