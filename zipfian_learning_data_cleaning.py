@@ -269,6 +269,33 @@ def plot_accuracy_by_lang(df):
     plt.savefig('/orcd/data/evelina9/001/USERS/psher/projects/zipfian_learning/Zipfian_word_learning/accuracy_Lang_Cond.png')
     plt.show()
 
+def plot_rank_vs_accuracy_simple(df):
+    """"""
+    
+    # Calculate average accuracy per word, rank, and condition
+    word_level = df.groupby(['words', 'word', 'condition', 'rank'])['correct'].mean().reset_index()
+    word_level.columns = ['words', 'word', 'condition', 'rank', 'accuracy']
+    
+    # Plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    for condition, color in [('zipfian', '#E74C3C'), ('uniform', '#3498DB')]:
+        subset = word_level[word_level['condition'] == condition]
+        jitter = np.random.uniform(-0.08, 0.08, size=len(subset))
+        ax.scatter(subset['rank'], subset['accuracy'], 
+                  c=color, label=condition.capitalize(), 
+                  alpha=0.7, s=100, edgecolors='black', linewidth=0.5)
+    
+    ax.set_xlabel('Word Rank', fontsize=12)
+    ax.set_ylabel('Average Accuracy', fontsize=12)
+    ax.set_title('Accuracy by Rank and Condition', fontsize=14, fontweight='bold')
+    ax.set_xticks([1, 2, 3, 4])
+    ax.set_ylim([0, 1.05])
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    
+    plt.savefig('/orcd/data/evelina9/001/USERS/psher/projects/zipfian_learning/Zipfian_word_learning/TEST.png')
+
 #####################################################################################################################################################
 # MAIN
 if __name__ == '__main__':
@@ -278,11 +305,12 @@ if __name__ == '__main__':
     df = get_current_rank(df)
     df = add_lang_num(df)
     df = get_item_ids(df)
-    filtered_df, removed_df = filter_participants(df)
-    check_conditions(df)
-    check_conditions(filtered_df)
-    check_conditions(removed_df)
-    check_accuracy(filtered_df)
-    compute_mean_accuracies(filtered_df)
-    df.to_csv("/orcd/data/evelina9/001/USERS/psher/projects/zipfian_learning/Zipfian_word_learning/data.csv", index=False)  # writes concatenated df to CSV
-    plot_accuracy_by_lang(df)
+    # filtered_df, removed_df = filter_participants(df)
+    # check_conditions(df)
+    # check_conditions(filtered_df)
+    # check_conditions(removed_df)
+    # check_accuracy(filtered_df)
+    # compute_mean_accuracies(filtered_df)
+    # df.to_csv("/orcd/data/evelina9/001/USERS/psher/projects/zipfian_learning/Zipfian_word_learning/data.csv", index=False)  # writes concatenated df to CSV
+    # plot_accuracy_by_lang(df)
+    plot_rank_vs_accuracy_simple(df)
