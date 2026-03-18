@@ -216,6 +216,7 @@ def compute_mean_accuracies(df, seed=43):
     
     # print(f'zipfian_rank1: {mean_zipf1}\nzipfian_rank2to4: {mean_zipf2to4}\nzipfian_overall: {mean_zipf}\nuniform_sample3: {mean_uniform_sample3}\nuniform_overall: {mean_uniform}')
     print(f'zipfian_rank1: {mean_zipf1}\nzipfian_rank2: {mean_zipf2}\nzipfian_rank3: {mean_zipf3}\nzipfian_rank4: {mean_zipf4}\n')
+
 #####################################################################################################################################################
 # STATS AND VISUALIZATIONS
 def plot_accuracy_by_lang(df):
@@ -308,6 +309,6 @@ if __name__ == '__main__':
     check_accuracy(filtered_df)
     compute_mean_accuracies(filtered_df)
     df.to_csv("/Users/patricksherlock/Desktop/zipfian_learning/data.csv", index=False)  # writes concatenated df to CSV
-    # plot_accuracy_by_lang(df)
-    # result = build_glmm(df)
-    # print(result.summary())
+    plot_accuracy_by_lang(df)
+    result = build_glmm(df)
+    print(result.summary())
