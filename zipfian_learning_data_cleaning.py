@@ -269,23 +269,51 @@ def plot_accuracy_by_lang(df):
     plt.savefig('/orcd/data/evelina9/001/USERS/psher/projects/zipfian_learning/Zipfian_word_learning/accuracy_Lang_Cond.png')
     plt.show()
 
-def plot_rank_vs_accuracy_simple(df):
+def plot_rank_vs_accuracy_simple(df, label_threshold=0.4):
     """"""
     
     # Calculate average accuracy per word, rank, and condition
     word_level = df.groupby(['words', 'word', 'condition', 'rank'])['correct'].mean().reset_index()
     word_level.columns = ['words', 'word', 'condition', 'rank', 'accuracy']
     
+    counts = word_level.groupby(['condition', 'rank']).size().reset_index(name='count')
+    print("\nDots per rank:")
+    print(counts)
+    
     # Plot
     fig, ax = plt.subplots(figsize=(10, 6))
     
     for condition, color in [('zipfian', '#E74C3C'), ('uniform', '#3498DB')]:
-        subset = word_level[word_level['condition'] == condition]
-        jitter = np.random.uniform(-0.08, 0.08, size=len(subset))
-        ax.scatter(subset['rank'], subset['accuracy'], 
+        subset = word_level[word_level['condition'] == condition].copy()
+        subset['rank_jittered'] = subset['rank'] + np.random.uniform(-0.2, 0.2, size=len(subset))
+        ax.scatter(subset['rank_jittered'], subset['accuracy'],
                   c=color, label=condition.capitalize(), 
                   alpha=0.7, s=100, edgecolors='black', linewidth=0.5)
+        
+        low_acc = subset[subset['accuracy'] < label_threshold]
+        for idx, row in low_acc.iterrows():
+            ax.annotate(row['word'], 
+                        xy=(row['rank_jittered'], row['accuracy']),
+                        xytext=(5, 5), textcoords='offset points',
+                        fontsize=8, alpha=0.8)
     
+    # calculate mean and SE per rank and condition
+    rank_stats = word_level.groupby(['condition', 'rank'])['accuracy'].agg(['mean', 'sem']).reset_index()
+    
+    for condition, color in [('zipfian', "black"), ('uniform', "black")]:
+        subset_stats = rank_stats[rank_stats['condition'] == condition]
+        
+        # Plot mean with error bars
+        ax.errorbar(subset_stats['rank'], subset_stats['mean'],
+                   #yerr=subset_stats['sem'],
+                   fmt='D', color=color, markersize=10,
+                   linewidth=2, capsize=5, capthick=2,
+                   alpha=0.9, zorder=5, markeredgecolor='black', markeredgewidth=1.5)
+        
+        # Connect means with a line
+        ax.plot(subset_stats['rank'], subset_stats['mean'],
+               color=color, linewidth=2.5, alpha=0.7, zorder=4)
+
     ax.set_xlabel('Word Rank', fontsize=12)
     ax.set_ylabel('Average Accuracy', fontsize=12)
     ax.set_title('Accuracy by Rank and Condition', fontsize=14, fontweight='bold')
@@ -294,7 +322,7 @@ def plot_rank_vs_accuracy_simple(df):
     ax.legend()
     ax.grid(True, alpha=0.3)
     
-    plt.savefig('/orcd/data/evelina9/001/USERS/psher/projects/zipfian_learning/Zipfian_word_learning/TEST.png')
+    plt.savefig('/orcd/data/evelina9/001/USERS/psher/projects/zipfian_learning/Zipfian_word_learning/accuracy_by_rank.png')
 
 #####################################################################################################################################################
 # MAIN
