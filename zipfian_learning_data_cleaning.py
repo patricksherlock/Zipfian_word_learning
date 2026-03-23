@@ -290,12 +290,17 @@ def plot_rank_vs_accuracy_simple(df, label_threshold=0.4):
                   c=color, label=condition.capitalize(), 
                   alpha=0.7, s=100, edgecolors='black', linewidth=0.5)
         
+        # Label only words below threshold
         low_acc = subset[subset['accuracy'] < label_threshold]
+        np.random.seed(42)  # for reproducibility
         for idx, row in low_acc.iterrows():
+            offset_x = np.random.randint(-25, 25)
+            offset_y = np.random.randint(-25, 25)
             ax.annotate(row['word'], 
                         xy=(row['rank_jittered'], row['accuracy']),
-                        xytext=(5, 5), textcoords='offset points',
-                        fontsize=8, alpha=0.8)
+                        xytext=(offset_x, offset_y), textcoords='offset points',
+                        fontsize=8, alpha=0.8,
+                        arrowprops=dict(arrowstyle='->', lw=0.5, alpha=0.5))
     
     # calculate mean and SE per rank and condition
     rank_stats = word_level.groupby(['condition', 'rank'])['accuracy'].agg(['mean', 'sem']).reset_index()
