@@ -64,26 +64,39 @@
     ];
 
     // randomly selects a condition [0=uniform, 1=Zipfian]
-    var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
+    var cond1 = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
+    if (cond1 == 0) {
+      var cond2 = 1;
+    } else {
+      var cond2 = 0;
+    };
 
-    // randomly select a language pair to use and get the words and their syllables (6 language pairs)
-    var lang_num = jsPsych.randomization.randomInt(0,5);
-    var L1 = L1s[lang_num];
-    var L2 = L2s[lang_num];
-    lang_num += 1;  // adds 1 because jsPsych index starts at zero and lang pairs are 1-6
-    jsPsych.data.addProperties({lang_pair: lang_num});
+    // randomly select 2 language pairs to use and get the words (6 language pairs)
+    var lang_nums = jsPsych.randomization.sampleWithoutReplacement([1,6], 2);
+    var L1_1 = L1s[lang_nums[0]];
+    var L2_1 = L2s[lang_nums[0]];
+    var L1_2 = L1s[lang_nums[1]];
+    var L2_2 = L2s[lang_nums[1]];
+    jsPsych.data.addProperties({lang_pair1: lang_nums[0]});
+    jsPsych.data.addProperties({lang_pair2: lang_nums[1]});
 
     // randomly select which langauge to use as words and which language to use as foils
     var words_foils = jsPsych.randomization.randomInt(0,1);
     if (words_foils == 0) {
-      var words = L1;
-      var foils = L2;
+      var words1 = L1_1;
+      var words2 = L1_2;
+      var foils1 = L2_1;
+      var foils2 = L2_2;
     } else {
-      var words = L2;
-      var foils = L1;
+      var words1 = L2_1;
+      var words2 = L2_2;
+      var foils1 = L1_1;
+      var foils2 = L1_2;
     };
-    jsPsych.data.addProperties({words: words});
-    jsPsych.data.addProperties({foils: foils});
+    jsPsych.data.addProperties({words1: words1});
+    jsPsych.data.addProperties({foils1: foils1});
+    jsPsych.data.addProperties({words2: words2});
+    jsPsych.data.addProperties({foils2: foils2});
 
     // capture info from Prolivar condition_assignment = jsPsych.randomization.sampleWithoutReplacement(['conditionA', 'conditionB', 'conditionC'], 1)[0];s
     var prolific_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
@@ -152,9 +165,11 @@
     // PRELOAD
     // audio
     var audio_files = [];
-    for (let i = 0; i < words.length; i++) {
-      audio_files.push("stimuli/words/"+words[i]+".wav");
-      audio_files.push("stimuli/words/"+foils[i]+".wav");
+    for (let i = 0; i < words1.length; i++) {
+      audio_files.push("stimuli/words/"+words1[i]+".wav");
+      audio_files.push("stimuli/words/"+foils1[i]+".wav");
+      audio_files.push("stimuli/words/"+words2[i]+".wav");
+      audio_files.push("stimuli/words/"+foils2[i]+".wav");
       audio_files.push("stimuli/fixation.wav");
 
       // audio files for audio check
@@ -251,20 +266,25 @@
       data: {task: 'instructions1' }
     };
 
-    // select condition
+    // get conditions
     var conditions = ["uniform", "zipfian"];
-    var condition = conditions[condition_number];
-    jsPsych.data.addProperties({condition: condition}); // adds a column named "condition" to the datafile that has the value of the condition for each row
+    var condition1 = conditions[cond1];
+    var condition2 = conditions[cond2]
+    jsPsych.data.addProperties({condition1: condition1}); // adds a column named "condition1" to the datafile that has the value of the condition1 for each row
+    jsPsych.data.addProperties({condition2: condition2}); // adds a column named "condition2" to the datafile that has the value of the condition2 for each row
 
     // select word frequency rank for Zipfian distribution
     var frequency_ranks = "NA"
-    if (condition_number == 1) {
-      frequency_ranks = jsPsych.randomization.sampleWithoutReplacement(words, 4);
+    if (cond1 == 1) {
+      frequency_ranks = jsPsych.randomization.sampleWithoutReplacement(words1, 4);
+    };
+    if (cond2 == 1) {
+    frequency_ranks = jsPsych.randomization.sampleWithoutReplacement(words2, 4)
     };
     jsPsych.data.addProperties({frequency_ranks: frequency_ranks});  // adds a column called "frequency_ranks" to the datafile
 
     // make list of audio files with 6 blocks of 25 words each followed by a fixation gap of 6 seconds
-    var exposure_files = []
+    var exposure_files1 = []
 
     // ensures no word is repeated twice in a row within a block
     function shuffleNoRepeats(word_list) {
