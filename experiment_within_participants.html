@@ -380,12 +380,11 @@
 
         const segmentation_instructions = {
           type: jsPsychHtmlButtonResponse,
-          stimulus:
-            `<p><b>Round ${roundNum} test</b></p>` +
-            `<p>You will hear two words on each trial. One is a real word from the language you just heard; the other is not.</p>` +
-            `<p>Select the one you think is the real word. If unsure, make your best guess.</p>` +
-            `<p><img height="100" src="stimuli/alien.png"></p>` +
-            `<p>Click next to begin.</p>`,
+          stimulus: [
+            '<p>In this section, we will test whether you learned something about the alien language. We will ask you 16 questions. For each question, you will hear 2 words. One of these words is a real word that appeared in the language you were listening to, and the other will sound similar to things you heard but did not actually appear. Your job is to select the word you DID hear. This task is challenging, so if you are unsure please make your best guess!</p>' +
+            '<p><img height="100" src="stimuli/alien.png"></p>' +
+            '<p> Click next to begin. </p>'
+          ],
           choices: ['next'],
           data: { task: 'instructions_segmentation', round: roundNum, condition: conditionLabel }
         };
@@ -559,8 +558,8 @@
         type: jsPsychHtmlButtonResponse,
         stimulus:
           '<p>Welcome to the experiment.</p>' +
-          '<p>You will complete <b>two rounds</b>. In each round, you will first listen to an alien language and then complete a short test.</p>' +
-          '<p>Please pay close attention throughout.</p>' +
+          '<p>In this study, you will be listening to an alien language. Your job is to listen carefully, and try your best to find and learn some patterns in the speech. If you pay attention, some of this learning may happen even without you noticing it. Sometimes, the speech will stop for a few seconds, so take those brief periods of silence to rest. This learning phase will take several minutes: a progress bar will show you how far along you are. After this phase, you will be asked some questions about what you heard, so make sure to pay attention!</p>' +
+          '<p>You will complete 2 rounds. Please pay close attention throughout.</p>' +
           '<p><img height="100" src="stimuli/alien.png"></p>' +
           '<p>Click next to begin.</p>',
         choices: ['next'],
