@@ -337,17 +337,17 @@
         const exposure_total = exposure_files.length;
         const segmentation_total = segmentation_test_stimuli_ran.length;
 
-        const round_exposure_instructions = {
-          type: jsPsychHtmlButtonResponse,
-          stimulus:
-            `<p><b>Round ${roundNum} of 2</b></p>` +
-            `<p>In this phase, listen carefully to the alien language and try to learn patterns in the speech.</p>` +
-            `<p>A progress bar will show your progress through this listening phase.</p>` +
-            `<p><img height="100" src="stimuli/alien.png"></p>` +
-            `<p>Click next to begin.</p>`,
-          choices: ['next'],
-          data: { task: 'instructions_exposure', round: roundNum, condition: conditionLabel }
-        };
+        // const round_exposure_instructions = {
+        //   type: jsPsychHtmlButtonResponse,
+        //   stimulus:
+        //     `<p><b>Round ${roundNum} of 2</b></p>` +
+        //     `<p>In this phase, listen carefully to the alien language and try to learn patterns in the speech.</p>` +
+        //     `<p>A progress bar will show your progress through this listening phase.</p>` +
+        //     `<p><img height="100" src="stimuli/alien.png"></p>` +
+        //     `<p>Click next to begin.</p>`,
+        //   choices: ['next'],
+        //   data: { task: 'instructions_exposure', round: roundNum, condition: conditionLabel }
+        // };
 
         const exposure_trial = {
           type: jsPsychAudioImageKeyboardResponse,
