@@ -45,21 +45,21 @@
       // LANGUAGE SETS
       // =========================
       var L1s = [
-        // ["kulego", "nagitu", "tobuma", "midobe"],
-        ["lakubi", "negado", "mudile", "kitena"],
-        ["dogiba", "kalegu", "tebodi", "minato"],
-        // ["kinome", "teguda", "bulego", "moditu"],
+        ["kulego", "nagitu", "tobuma", "midobe"],
+        // ["lakubi", "negado", "mudile", "kitena"],
+        // ["dogiba", "kalegu", "tebodi", "minato"],
+        ["kinome", "teguda", "bulego", "moditu"],
         // ["tobanu", "gukema", "delubo", "lamodi"],
-        ["nodebu", "dimate", "mekugo", "gubila"]
+        // ["nodebu", "dimate", "mekugo", "gubila"]
       ];
 
       var L2s = [
-        // ["lemaku", "gibeto", "bugona", "dotumi"],
-        ["binaku", "temula", "dokine", "galedi"],
-        ["nadite", "lebado", "bogumi", "gitoka"],
-        // ["gumeki", "letumo", "nodabu", "digote"],
+        ["lemaku", "gibeto", "bugona", "dotumi"],
+        // ["binaku", "temula", "dokine", "galedi"],
+        // ["nadite", "lebado", "bogumi", "gitoka"],
+        ["gumeki", "letumo", "nodabu", "digote"],
         // ["matolu", "nubola", "mogude", "kediba"],
-        ["bimegu", "tegoma", "kudino", "labude"]
+        // ["bimegu", "tegoma", "kudino", "labude"]
       ];
 
       // cond1: 0=uniform, 1=zipfian; cond2 is opposite
@@ -76,7 +76,7 @@
 
       // choose whether words come from L1 or L2; other language is foils
       // var words_foils = jsPsych.randomization.sampleWithReplacement([0, 1], 1)[0];
-      var words_foils = 0
+      var words_foils = 1
       var words1, words2, foils1, foils2;
       if (words_foils === 0) {
         words1 = L1_1; words2 = L1_2;
