@@ -1,4 +1,4 @@
 # Zipfian_word_learning
-experiment.html is the original version
+experiment.html is the original online version
 
-experimentV2.html is the within-participants version
+experiment_within_participants.html is the within-participant online version
