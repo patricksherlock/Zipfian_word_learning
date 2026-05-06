@@ -64,7 +64,8 @@
     ];
 
     // randomly selects a condition [0=uniform, 1=Zipfian]
-    var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
+    // var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
+    var condition_number = 1;
 
     // randomly select a language pair to use and get the words and their syllables (6 language pairs)
     var lang_num = jsPsych.randomization.randomInt(0,5);
@@ -324,16 +325,11 @@
 
     // Zipfian (condition_number=1)
     } else {
-      const ZIPF = [12, 6, 4, 3];      // rank1..rank4 counts PER SEGMENT
+      const ZIPF = [96, 21, 9, 6];      // rank1..rank4 counts PER SEGMENT
       const N_SEGMENTS = 6;            // total exposure segments
-      const FIXATION_EVERY = 25;       // insert fixation after this many word files
+      const FIXATION_EVERY = 22;       // insert fixation after this many word files
       const MOST_FREQ_WORD = frequency_ranks[0]; // assumes rank-1 is index 0
-    
-      // If ZIPF is per-segment (like your old code), multiply by number of segments:
-      const totalCounts = ZIPF.map(c => c * N_SEGMENTS);
-    
-      // If instead ZIPF is already total counts for whole exposure, use:
-      // const totalCounts = ZIPF.slice();
+      const totalCounts = ZIPF.slice();
     
       function hasInvalidAdjRepeat(seq, allowedRepeatWord) {
         for (let i = 1; i < seq.length; i++) {
@@ -395,26 +391,24 @@
         exposure_files.push("stimuli/fixation.wav");
       }
     }
-        
-        // pushes audio and fixation files to exposure files list
-        for (let z = 0; z < trialList.length; z++) {
-          exposure_files.push("stimuli/words/"+trialList[z]+".wav")
-        };
-        exposure_files.push("stimuli/fixation.wav");
-      };
-    };
 
     // checks if there are word repeats across block boundaries; for testing only
-    function checkFullExposure(arr) {
+    function checkFullExposure(arr, allowedRepeatFile = null) {
       const filtered = arr.filter(file => !file.includes("fixation"));
       for (let i = 1; i < filtered.length; i++) {
-        if (filtered[i] === filtered[i - 1]) {
-          throw new Error("Adjacent duplicate detected across blocks: " + filtered[i]);
-        };
-      };
-    };
+        const isRepeat = filtered[i] === filtered[i - 1];
+        const isAllowed = allowedRepeatFile && filtered[i] === allowedRepeatFile;
+        if (isRepeat && !isAllowed) {
+          throw new Error("Illegal adjacent duplicate: " + filtered[i]);
+        }
+      }
+    }
 
-    checkFullExposure(exposure_files);
+    if (condition_number == 1) {
+      checkFullExposure(exposure_files, `stimuli/words/${frequency_ranks[0]}.wav`);
+    } else {
+      checkFullExposure(exposure_files);
+    }
 
     // show progress bar when exposure phase starts
     const show_progress_bar = {
