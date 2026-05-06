@@ -264,151 +264,194 @@
     };
     jsPsych.data.addProperties({frequency_ranks: frequency_ranks});  // adds a column called "frequency_ranks" to the datafile
 
-    // make list of audio files with 6 blocks of 25 words each followed by a fixation gap of 6 seconds
-    var exposure_files = []
+    // make list of audio files
+    var exposure_files = [];
 
-    // ensures no word is repeated twice in a row within a block
-    function shuffleNoRepeats(word_list) {
-      let shuffled;
-      let hasRepeats = true;
+    /* =========================
+       CONFIG YOU CAN EDIT
+       ========================= */
 
-      while (hasRepeats) {
-        shuffled = jsPsych.randomization.shuffle(word_list.slice());
-        hasRepeats = false;
-        for (let i = 1; i < shuffled.length; i++) {
-          if (shuffled[i] === shuffled[i - 1]) {
-            hasRepeats = true;
-            break;
-          };
-        };
-      };
+    // Insert fixation after every N word files
+    const FIXATION_EVERY = 25;
 
-      return shuffled;
-    };
+    // If total words is not divisible by FIXATION_EVERY, add one fixation at very end
+    const ADD_FINAL_FIXATION_IF_INCOMPLETE = true;
 
-    // uniform (condition_number=0)
-    if (condition_number == 0){
-      let lastWordPreviousBlock = null;
-      for (let i = 0; i < 6; i++){
-        var trialList = [];
-        words.forEach(word => {
-          
-          for (let x = 0; x < 6; x++) {
-            trialList.push(word);
-          }
-        });
+    // UNIFORM: total number of times each word is heard across full exposure
+    // order must match `words`
+    const UNIFORM_TOTAL_COUNTS = [38, 38, 37, 37]; // sums to 150
 
-        var shuffledWords = jsPsych.randomization.shuffle(words);
-        for (let y = 0; y < 1; y++) {
-          trialList.push(shuffledWords[y]);
-        };
-      
-        // ensures words aren't repeated across block boundaries
-        let valid = false;
-        while (!valid) {
-          trialList = shuffleNoRepeats(trialList);
-          let firstWord = trialList[0];
-          let lastWord = trialList[trialList.length - 1];
-          let noBoundaryRepeat = lastWordPreviousBlock === null || firstWord !== lastWordPreviousBlock;
-          if (noBoundaryRepeat) {
-            valid = true;
-            lastWordPreviousBlock = lastWord;
-          };
-        };
+    // ZIPFIAN: total number of times each rank word is heard across full exposure
+    // order must match `frequency_ranks` (rank1, rank2, rank3, rank4)
+    const ZIPF_TOTAL_COUNTS = [72, 36, 24, 18]; // sums to 150
 
-        // pushes audio and fixation files to exposure files list
-        for (let z = 0; z < trialList.length; z++) {
-          exposure_files.push("stimuli/words/"+trialList[z]+".wav")
-        };
-        exposure_files.push("stimuli/fixation.wav");
-      };
 
-    // Zipfian (condition_number=1)
-    } else {
-      const ZIPF = [96, 21, 9, 6];      // rank1..rank4 counts PER SEGMENT
-      const N_SEGMENTS = 6;            // total exposure segments
-      const FIXATION_EVERY = 22;       // insert fixation after this many word files
-      const MOST_FREQ_WORD = frequency_ranks[0]; // assumes rank-1 is index 0
-      const totalCounts = ZIPF.slice();
+    /***********************
+     * Helper functions
+     ***********************/
+
+    // weighted random choice among candidate indices using remaining counts as weights
+    function pickWeightedIndex(indices, remaining) {
+      let total = 0;
+      for (const i of indices) total += remaining[i];
     
-      function hasInvalidAdjRepeat(seq, allowedRepeatWord) {
-        for (let i = 1; i < seq.length; i++) {
-          if (seq[i] === seq[i - 1] && seq[i] !== allowedRepeatWord) {
-            return true; // illegal repeat (rank2/3/4)
-          }
-        }
-        return false;
+      let r = Math.random() * total;
+      for (const i of indices) {
+        r -= remaining[i];
+        if (r < 0) return i;
+      }
+      return indices[indices.length - 1];
+    }
+
+    // Build a sequence with exact counts and adjacency constraints
+    // allowConsecutiveWord = null  => no word can repeat consecutively
+    // allowConsecutiveWord = "foo" => only "foo" may repeat consecutively
+    function buildConstrainedWordStream(wordList, counts, allowConsecutiveWord = null, maxRestarts = 10000) {
+      if (wordList.length !== counts.length) {
+        throw new Error("wordList and counts must have same length.");
       }
     
-      function buildZipfWordStream(wordsByRank, counts, allowedRepeatWord) {
-        if (wordsByRank.length !== counts.length) {
-          throw new Error("frequency_ranks and ZIPF must have same length.");
-        }
-      
-        const total = counts.reduce((a, b) => a + b, 0);
-      
-        // Basic feasibility check for non-allowed words
-        for (let i = 1; i < counts.length; i++) {
+      const total = counts.reduce((a, b) => a + b, 0);
+    
+      // Feasibility check for words that are NOT allowed to repeat
+      for (let i = 0; i < wordList.length; i++) {
+        if (wordList[i] !== allowConsecutiveWord) {
           if (counts[i] > (total - counts[i] + 1)) {
             throw new Error(
-              `Impossible constraint for ${wordsByRank[i]}: too frequent to avoid adjacent repeats.`
+              `Impossible constraint: "${wordList[i]}" appears too often to avoid adjacent repeats.`
             );
           }
         }
+      }
+    
+      // Greedy with restarts
+      for (let attempt = 0; attempt < maxRestarts; attempt++) {
+        const remaining = counts.slice();
+        const seq = [];
+        let prev = null;
+        let failed = false;
       
-        // Build multiset
-        let bag = [];
-        for (let i = 0; i < wordsByRank.length; i++) {
-          for (let k = 0; k < counts[i]; k++) {
-            bag.push(wordsByRank[i]);
+        for (let pos = 0; pos < total; pos++) {
+          const candidates = [];
+        
+          for (let i = 0; i < wordList.length; i++) {
+            if (remaining[i] <= 0) continue;
+            const w = wordList[i];
+          
+            // block illegal immediate repeats
+            if (w === prev && w !== allowConsecutiveWord) continue;
+          
+            candidates.push(i);
           }
-        }
-      
-        // Shuffle until constraints satisfied
-        const MAX_ATTEMPTS = 50000;
-        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-          const candidate = jsPsych.randomization.shuffle(bag.slice());
-          if (!hasInvalidAdjRepeat(candidate, allowedRepeatWord)) {
-            return candidate;
+        
+          if (candidates.length === 0) {
+            failed = true;
+            break;
           }
+        
+          const chosenIdx = pickWeightedIndex(candidates, remaining);
+          const chosenWord = wordList[chosenIdx];
+        
+          seq.push(chosenWord);
+          remaining[chosenIdx]--;
+          prev = chosenWord;
         }
       
-        throw new Error("Could not generate valid Zipf stream under repeat constraints.");
+        if (!failed) return seq;
       }
     
-      const wordStream = buildZipfWordStream(frequency_ranks, totalCounts, MOST_FREQ_WORD);
-    
-      // Convert to audio list + insert fixation every FIXATION_EVERY words
-      for (let i = 0; i < wordStream.length; i++) {
-        exposure_files.push(`stimuli/words/${wordStream[i]}.wav`);
-        if ((i + 1) % FIXATION_EVERY === 0) {
-          exposure_files.push("stimuli/fixation.wav");
-        }
-      }
-    
-      // Optional: if you want a fixation even after a final short segment
-      if (wordStream.length % FIXATION_EVERY !== 0) {
-        exposure_files.push("stimuli/fixation.wav");
-      }
+      throw new Error("Could not generate a valid sequence under adjacency constraints.");
     }
 
-    // checks if there are word repeats across block boundaries; for testing only
+    // Turn word stream into audio file list and insert fixations
+    function buildExposureFilesFromWordStream(
+      wordStream,
+      fixationEvery,
+      fixationFile = "stimuli/fixation.wav",
+      addFinalFixationIfIncomplete = true
+    ) {
+      const out = [];
+    
+      for (let i = 0; i < wordStream.length; i++) {
+        out.push(`stimuli/words/${wordStream[i]}.wav`);
+      
+        if ((i + 1) % fixationEvery === 0) {
+          out.push(fixationFile);
+        }
+      }
+    
+      // optional fixation after trailing partial segment
+      if (addFinalFixationIfIncomplete && (wordStream.length % fixationEvery !== 0)) {
+        out.push(fixationFile);
+      }
+    
+      return out;
+    }
+
+
+    /***********************
+     * Build exposure_files
+     ***********************/
+
+    // uniform (condition_number=0): no consecutive repeats for any word
+    if (condition_number == 0) {
+      const uniformStream = buildConstrainedWordStream(
+        words,
+        UNIFORM_TOTAL_COUNTS,
+        null // no word can repeat consecutively
+      );
+    
+      exposure_files = buildExposureFilesFromWordStream(
+        uniformStream,
+        FIXATION_EVERY,
+        "stimuli/fixation.wav",
+        ADD_FINAL_FIXATION_IF_INCOMPLETE
+      );
+    
+    // Zipfian (condition_number=1): only rank-1 word can repeat consecutively
+    } else {
+      const mostFrequentWord = frequency_ranks[0];
+    
+      const zipfStream = buildConstrainedWordStream(
+        frequency_ranks,
+        ZIPF_TOTAL_COUNTS,
+        mostFrequentWord // only this word may repeat consecutively
+      );
+    
+      exposure_files = buildExposureFilesFromWordStream(
+        zipfStream,
+        FIXATION_EVERY,
+        "stimuli/fixation.wav",
+        ADD_FINAL_FIXATION_IF_INCOMPLETE
+      );
+    }
+
+
+    /***********************
+     * Checkers (testing)
+     ***********************/
+
+    // checks adjacency across full exposure; allows one file type to repeat if specified
     function checkFullExposure(arr, allowedRepeatFile = null) {
       const filtered = arr.filter(file => !file.includes("fixation"));
+    
       for (let i = 1; i < filtered.length; i++) {
         const isRepeat = filtered[i] === filtered[i - 1];
-        const isAllowed = allowedRepeatFile && filtered[i] === allowedRepeatFile;
-        if (isRepeat && !isAllowed) {
-          throw new Error("Illegal adjacent duplicate: " + filtered[i]);
+        const isAllowedRepeat = allowedRepeatFile !== null && filtered[i] === allowedRepeatFile;
+      
+        if (isRepeat && !isAllowedRepeat) {
+          throw new Error("Illegal adjacent duplicate detected: " + filtered[i]);
         }
       }
     }
 
+    // run checker with condition-appropriate rule
     if (condition_number == 1) {
       checkFullExposure(exposure_files, `stimuli/words/${frequency_ranks[0]}.wav`);
     } else {
-      checkFullExposure(exposure_files);
-    }
+      checkFullExposure(exposure_files, null);
+    };
+
 
     // show progress bar when exposure phase starts
     const show_progress_bar = {
@@ -435,9 +478,9 @@
     var exposure_trial = {
       type: jsPsychAudioImageKeyboardResponse,
       image: function(){
-                      var html = '<img height="200" src="stimuli/fixation.png">';
-                      return html;
-                  },
+        var html = '<img height="200" src="stimuli/fixation.png">';
+        return html;
+      },
       stimulus: jsPsych.timelineVariable('audio'),
       choices: "NO_KEYS",
       audio_delay: 0,
@@ -472,6 +515,69 @@
     };
 
     timeline.push(instructions, show_progress_bar, exposure_block, hide_progress_bar);
+
+    // // show progress bar when exposure phase starts
+    // const show_progress_bar = {
+    //   type: jsPsychHtmlKeyboardResponse,
+    //   stimulus: "",
+    //   choices: "NO_KEYS",
+    //   trial_duration: 1,
+    //   on_start: function() {
+    //     const progressContainer = document.querySelector('#jspsych-progressbar-container');
+    //     if (progressContainer) progressContainer.style.visibility = 'visible';
+    //     const startTime = Date.now();
+    //     const totalDuration = 3 * 60 * 1000; // total trial duration estimate in ms
+    //     const intervalID = setInterval(() => {
+    //       let elapsed = Date.now() - startTime;
+    //       let progress = elapsed / totalDuration;
+    //       if (progress > 1) progress = 1;
+    //       jsPsych.setProgressBar(progress);
+    //     }, 250); // updates every 250ms for smoothness
+    //     window._exposureProgressIntervalID = intervalID;
+    //   }
+    // };
+
+    // // exposure trial; no time between audio file playback
+    // var exposure_trial = {
+    //   type: jsPsychAudioImageKeyboardResponse,
+    //   image: function(){
+    //                   var html = '<img height="200" src="stimuli/fixation.png">';
+    //                   return html;
+    //               },
+    //   stimulus: jsPsych.timelineVariable('audio'),
+    //   choices: "NO_KEYS",
+    //   audio_delay: 0,
+    //   trial_ends_after_audio: true,
+    //   response_ends_trial: false,
+    //   response_allowed_while_playing: false,
+    //   post_trial_gap: 0,
+    //   data: {
+    //     task: 'exposure_trial'
+    //   }
+    // };
+
+    // // hide progress bar when exposure phase ends
+    // const hide_progress_bar = {
+    //   type: jsPsychHtmlKeyboardResponse,
+    //   stimulus: "",
+    //   choices: "NO_KEYS",
+    //   trial_duration: 1,
+    //   on_start: function() {
+    //     const progressContainer = document.querySelector('#jspsych-progressbar-container');
+    //     if (progressContainer) progressContainer.style.visibility = 'hidden';
+    //     clearInterval(window._exposureProgressIntervalID);
+    //     jsPsych.setProgressBar(0);
+    //   }
+    // };
+
+    // // play all audio files consecutively
+    // var exposure_block = {
+    //   timeline: [exposure_trial],
+    //   timeline_variables: exposure_files.map(audio_file => ({ audio: audio_file })),
+    //   randomize_order: false
+    // };
+
+    // timeline.push(instructions, show_progress_bar, exposure_block, hide_progress_bar);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // SEGMENTATION
