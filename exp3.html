@@ -324,32 +324,77 @@
 
     // Zipfian (condition_number=1)
     } else {
-      let lastWordPreviousBlock = null;
-      for (let i = 0; i < 6; i++){
-        var trialList = [];
-        var zipf = [12, 6, 4, 3];
-        
-        for (let x = 0; x < frequency_ranks.length; x++) {
-          var word = frequency_ranks[x];
-          var count = zipf[x];
-        
-          for (let y = 0; y < count; y++) {
-            trialList.push(word);
-          };
-        };
-
-        // ensures words aren't repeated across block boundaries
-        let valid = false;
-        while (!valid) {
-          trialList = shuffleNoRepeats(trialList);
-          let firstWord = trialList[0];
-          let lastWord = trialList[trialList.length - 1];
-          let noBoundaryRepeat = lastWordPreviousBlock === null || firstWord !== lastWordPreviousBlock;
-          if (noBoundaryRepeat) {
-            valid = true;
-            lastWordPreviousBlock = lastWord;
-          };
-        };
+      const ZIPF = [12, 6, 4, 3];      // rank1..rank4 counts PER SEGMENT
+      const N_SEGMENTS = 6;            // total exposure segments
+      const FIXATION_EVERY = 25;       // insert fixation after this many word files
+      const MOST_FREQ_WORD = frequency_ranks[0]; // assumes rank-1 is index 0
+    
+      // If ZIPF is per-segment (like your old code), multiply by number of segments:
+      const totalCounts = ZIPF.map(c => c * N_SEGMENTS);
+    
+      // If instead ZIPF is already total counts for whole exposure, use:
+      // const totalCounts = ZIPF.slice();
+    
+      function hasInvalidAdjRepeat(seq, allowedRepeatWord) {
+        for (let i = 1; i < seq.length; i++) {
+          if (seq[i] === seq[i - 1] && seq[i] !== allowedRepeatWord) {
+            return true; // illegal repeat (rank2/3/4)
+          }
+        }
+        return false;
+      }
+    
+      function buildZipfWordStream(wordsByRank, counts, allowedRepeatWord) {
+        if (wordsByRank.length !== counts.length) {
+          throw new Error("frequency_ranks and ZIPF must have same length.");
+        }
+      
+        const total = counts.reduce((a, b) => a + b, 0);
+      
+        // Basic feasibility check for non-allowed words
+        for (let i = 1; i < counts.length; i++) {
+          if (counts[i] > (total - counts[i] + 1)) {
+            throw new Error(
+              `Impossible constraint for ${wordsByRank[i]}: too frequent to avoid adjacent repeats.`
+            );
+          }
+        }
+      
+        // Build multiset
+        let bag = [];
+        for (let i = 0; i < wordsByRank.length; i++) {
+          for (let k = 0; k < counts[i]; k++) {
+            bag.push(wordsByRank[i]);
+          }
+        }
+      
+        // Shuffle until constraints satisfied
+        const MAX_ATTEMPTS = 50000;
+        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+          const candidate = jsPsych.randomization.shuffle(bag.slice());
+          if (!hasInvalidAdjRepeat(candidate, allowedRepeatWord)) {
+            return candidate;
+          }
+        }
+      
+        throw new Error("Could not generate valid Zipf stream under repeat constraints.");
+      }
+    
+      const wordStream = buildZipfWordStream(frequency_ranks, totalCounts, MOST_FREQ_WORD);
+    
+      // Convert to audio list + insert fixation every FIXATION_EVERY words
+      for (let i = 0; i < wordStream.length; i++) {
+        exposure_files.push(`stimuli/words/${wordStream[i]}.wav`);
+        if ((i + 1) % FIXATION_EVERY === 0) {
+          exposure_files.push("stimuli/fixation.wav");
+        }
+      }
+    
+      // Optional: if you want a fixation even after a final short segment
+      if (wordStream.length % FIXATION_EVERY !== 0) {
+        exposure_files.push("stimuli/fixation.wav");
+      }
+    }
         
         // pushes audio and fixation files to exposure files list
         for (let z = 0; z < trialList.length; z++) {
