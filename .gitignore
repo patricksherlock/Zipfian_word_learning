@@ -1,0 +1,12 @@
+# Papaers
+papers
+
+# Outputs
+*.csv
+*.png
+*.txt
+figs
+
+# Data
+raw_data
+data
