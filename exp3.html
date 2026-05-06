@@ -64,8 +64,7 @@
     ];
 
     // randomly selects a condition [0=uniform, 1=Zipfian]
-    // var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
-    var condition_number = 0;
+    var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
 
     // randomly select a language pair to use and get the words and their syllables (6 language pairs)
     var lang_num = jsPsych.randomization.randomInt(0,5);
@@ -267,10 +266,6 @@
     // make list of audio files
     var exposure_files = [];
 
-    /* =========================
-       CONFIG YOU CAN EDIT
-       ========================= */
-
     // Insert fixation after every N word files
     const FIXATION_EVERY = 24;
 
@@ -415,11 +410,6 @@
       );
     }
 
-
-    /***********************
-     * Checkers (testing)
-     ***********************/
-
     // checks adjacency across full exposure; allows one file type to repeat if specified
     function checkFullExposure(arr, allowedRepeatFile = null) {
       const filtered = arr.filter(file => !file.includes("fixation"));
@@ -440,7 +430,6 @@
     } else {
       checkFullExposure(exposure_files, null);
     };
-
 
     // show progress bar when exposure phase starts
     const show_progress_bar = {
