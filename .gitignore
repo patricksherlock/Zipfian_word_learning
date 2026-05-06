@@ -1,12 +1,17 @@
 # Papaers
-papers
+papers/
 
 # Outputs
 *.csv
 *.png
 *.txt
-figs
+figs/
+__pycache__/
 
 # Data
-raw_data
-data
+raw_data/
+data/
+
+# Processing scripts
+*.py
+*.R
