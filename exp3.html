@@ -272,23 +272,16 @@
        ========================= */
 
     // Insert fixation after every N word files
-    const FIXATION_EVERY = 25;
+    const FIXATION_EVERY = 24;
 
     // If total words is not divisible by FIXATION_EVERY, add one fixation at very end
     const ADD_FINAL_FIXATION_IF_INCOMPLETE = true;
 
     // UNIFORM: total number of times each word is heard across full exposure
-    // order must match `words`
-    const UNIFORM_TOTAL_COUNTS = [38, 38, 37, 37]; // sums to 150
+    const UNIFORM_TOTAL_COUNTS = [36, 36, 36, 36]; // sums to 144
 
     // ZIPFIAN: total number of times each rank word is heard across full exposure
-    // order must match `frequency_ranks` (rank1, rank2, rank3, rank4)
-    const ZIPF_TOTAL_COUNTS = [72, 36, 24, 18]; // sums to 150
-
-
-    /***********************
-     * Helper functions
-     ***********************/
+    const ZIPF_TOTAL_COUNTS = [104, 24, 10, 6]; // sums to 144
 
     // weighted random choice among candidate indices using remaining counts as weights
     function pickWeightedIndex(indices, remaining) {
@@ -388,11 +381,7 @@
       return out;
     }
 
-
-    /***********************
-     * Build exposure_files
-     ***********************/
-
+    // BUILD EXPOSURE FILES
     // uniform (condition_number=0): no consecutive repeats for any word
     if (condition_number == 0) {
       const uniformStream = buildConstrainedWordStream(
@@ -515,69 +504,6 @@
     };
 
     timeline.push(instructions, show_progress_bar, exposure_block, hide_progress_bar);
-
-    // // show progress bar when exposure phase starts
-    // const show_progress_bar = {
-    //   type: jsPsychHtmlKeyboardResponse,
-    //   stimulus: "",
-    //   choices: "NO_KEYS",
-    //   trial_duration: 1,
-    //   on_start: function() {
-    //     const progressContainer = document.querySelector('#jspsych-progressbar-container');
-    //     if (progressContainer) progressContainer.style.visibility = 'visible';
-    //     const startTime = Date.now();
-    //     const totalDuration = 3 * 60 * 1000; // total trial duration estimate in ms
-    //     const intervalID = setInterval(() => {
-    //       let elapsed = Date.now() - startTime;
-    //       let progress = elapsed / totalDuration;
-    //       if (progress > 1) progress = 1;
-    //       jsPsych.setProgressBar(progress);
-    //     }, 250); // updates every 250ms for smoothness
-    //     window._exposureProgressIntervalID = intervalID;
-    //   }
-    // };
-
-    // // exposure trial; no time between audio file playback
-    // var exposure_trial = {
-    //   type: jsPsychAudioImageKeyboardResponse,
-    //   image: function(){
-    //                   var html = '<img height="200" src="stimuli/fixation.png">';
-    //                   return html;
-    //               },
-    //   stimulus: jsPsych.timelineVariable('audio'),
-    //   choices: "NO_KEYS",
-    //   audio_delay: 0,
-    //   trial_ends_after_audio: true,
-    //   response_ends_trial: false,
-    //   response_allowed_while_playing: false,
-    //   post_trial_gap: 0,
-    //   data: {
-    //     task: 'exposure_trial'
-    //   }
-    // };
-
-    // // hide progress bar when exposure phase ends
-    // const hide_progress_bar = {
-    //   type: jsPsychHtmlKeyboardResponse,
-    //   stimulus: "",
-    //   choices: "NO_KEYS",
-    //   trial_duration: 1,
-    //   on_start: function() {
-    //     const progressContainer = document.querySelector('#jspsych-progressbar-container');
-    //     if (progressContainer) progressContainer.style.visibility = 'hidden';
-    //     clearInterval(window._exposureProgressIntervalID);
-    //     jsPsych.setProgressBar(0);
-    //   }
-    // };
-
-    // // play all audio files consecutively
-    // var exposure_block = {
-    //   timeline: [exposure_trial],
-    //   timeline_variables: exposure_files.map(audio_file => ({ audio: audio_file })),
-    //   randomize_order: false
-    // };
-
-    // timeline.push(instructions, show_progress_bar, exposure_block, hide_progress_bar);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // SEGMENTATION
