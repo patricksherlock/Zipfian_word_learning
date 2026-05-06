@@ -65,7 +65,7 @@
 
     // randomly selects a condition [0=uniform, 1=Zipfian]
     // var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
-    var condition_number = 1;
+    var condition_number = 0;
 
     // randomly select a language pair to use and get the words and their syllables (6 language pairs)
     var lang_num = jsPsych.randomization.randomInt(0,5);
@@ -452,7 +452,7 @@
         const progressContainer = document.querySelector('#jspsych-progressbar-container');
         if (progressContainer) progressContainer.style.visibility = 'visible';
         const startTime = Date.now();
-        const totalDuration = 3 * 60 * 1000; // total trial duration estimate in ms
+        const totalDuration = 2.75 * 60 * 1000; // total trial duration estimate in ms (2:45)
         const intervalID = setInterval(() => {
           let elapsed = Date.now() - startTime;
           let progress = elapsed / totalDuration;
