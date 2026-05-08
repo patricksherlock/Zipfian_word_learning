@@ -46,38 +46,36 @@
 
     // all possible langauges; L1 is first language in a pair, L2 is second language in a pair
     var L1s = [
-      ["kulego", "nagitu", "tobuma", "midobe"],
-      ["lakubi", "negado", "mudile", "kitena"],
-      ["dogiba", "kalegu", "tebodi", "minato"],
+      // ["kulego", "nagitu", "tobuma", "midobe"],
+      // ["lakubi", "negado", "mudile", "kitena"],
+      // ["dogiba", "kalegu", "tebodi", "minato"],
       ["kinome", "teguda", "bulego", "moditu"],
       ["tobanu", "gukema", "delubo", "lamodi"],
-      ["nodebu", "dimate", "mekugo", "gubila"]
+      // ["nodebu", "dimate", "mekugo", "gubila"]
     ];
 
     var L2s = [
-      ["lemaku", "gibeto", "bugona", "dotumi"],
-      ["binaku", "temula", "dokine", "galedi"],
-      ["nadite", "lebado", "bogumi", "gitoka"],
+      // ["lemaku", "gibeto", "bugona", "dotumi"],
+      // ["binaku", "temula", "dokine", "galedi"],
+      // ["nadite", "lebado", "bogumi", "gitoka"],
       ["gumeki", "letumo", "nodabu", "digote"],
       ["matolu", "nubola", "mogude", "kediba"],
-      ["bimegu", "tegoma", "kudino", "labude"]
+      // ["bimegu", "tegoma", "kudino", "labude"]
     ];
 
     // randomly selects a condition [0=uniform, 1=Zipfian]
     var condition_number = jsPsych.randomization.sampleWithReplacement([0,1], 1)[0];
 
     // randomly select a language pair to use and get the words and their syllables (6 language pairs)
-    var lang_num = jsPsych.randomization.randomInt(0,5);
+    var lang_num = jsPsych.randomization.randomInt(0,1);
     var L1 = L1s[lang_num];
     var L2 = L2s[lang_num];
-    var L1 = L1s[5];  // ###############################################################################
-    var L2 = L2s[5];  // ###############################################################################
     lang_num += 1;  // adds 1 because jsPsych index starts at zero and lang pairs are 1-6
     jsPsych.data.addProperties({lang_pair: lang_num});
 
     // randomly select which langauge to use as words and which language to use as foils
     var words_foils = jsPsych.randomization.randomInt(0,1);
-    var words_foils = 1;  // ###############################################################################
+    var words_foils = 0;  //#####################################
     if (words_foils == 0) {
       var words = L1;
       var foils = L2;
